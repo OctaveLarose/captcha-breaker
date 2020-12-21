@@ -2,7 +2,7 @@ import os
 
 from keras.models import load_model
 
-from extract_characters import get_letter_image_regions, get_mod_thresh, get_contours
+from extract_characters import get_letter_image_regions, get_mod_imgs, get_contours
 from helpers import resize_to_fit
 from imutils import paths
 import numpy as np
@@ -36,7 +36,7 @@ captcha_image_files = list(paths.list_images(DATASET_DIR))
 
 # loop over the image paths
 for captcha_image_file in captcha_image_files:
-    image = get_mod_thresh(captcha_image_file)
+    image, _ = get_mod_imgs(captcha_image_file)
     contours = get_contours(image)
     letter_image_regions = get_letter_image_regions(contours)
 

@@ -10,7 +10,7 @@ CHARS_DIR = './chars'
 char_counts = {}
 
 
-def get_mod_thresh(captcha_image_file: str):
+def get_mod_imgs(captcha_image_file: str):
     image = cv2.imread(captcha_image_file)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -29,7 +29,7 @@ def get_mod_thresh(captcha_image_file: str):
     kernel = np.ones((2, 2), np.uint8)
     mod_thresh = cv2.morphologyEx(mod_thresh, cv2.MORPH_CLOSE, kernel)
 
-    return mod_thresh
+    return mod_thresh, gray
 
 
 def get_contours(mod_thresh):
@@ -115,7 +115,7 @@ def main():
     for filename in os.listdir(DATASET_DIR):
         captcha_image_file = os.path.join(DATASET_DIR, filename)
 
-        mod_thresh = get_mod_thresh(captcha_image_file)
+        mod_thresh, gray = get_mod_imgs(captcha_image_file)
         contours = get_contours(mod_thresh)
         letter_image_regions = get_letter_image_regions(contours)
 
