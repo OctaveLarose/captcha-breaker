@@ -2,3 +2,5 @@
 dataset/
 chars/
 venv/
+captcha_model.hdf5
+model_labels.dat

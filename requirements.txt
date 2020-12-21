@@ -40,3 +40,4 @@ Werkzeug==1.0.1
 wrapt==1.12.1
 
 imutils~=0.5.3
+scikit-learn~=0.23.2
