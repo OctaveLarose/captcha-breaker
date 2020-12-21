@@ -1,12 +1,8 @@
-import os
-
 from keras.models import load_model
-
 from extract_characters import get_letter_image_regions, get_mod_imgs, get_contours
 from helpers import resize_to_fit
 from imutils import paths
 import numpy as np
-import imutils
 import cv2
 import pickle
 
@@ -99,15 +95,15 @@ for captcha_image_file in captcha_image_files:
     #      exit()
 
 print("\nFinal results (on {} elements):".format(len(captcha_image_files)))
-print("Number of contour related errors (not 4 distinct characters detected) : {}".format(nb_contour_errors))
+print("Number of contour related errors (not 4 distinct characters found) : {}".format(nb_contour_errors))
 print("Number of CV2 resizing errors (couldn't resize image, so couldn't feed it to the NN) : {}".format(nb_resize_errors))
 print("Number of invalid guesses : {}".format(nb_invalid_guesses))
 print("Number of valid guesses : {}".format(nb_valid_guesses))
 
 print("Valid/Invalid guesses ratio (including errors): {}/{} = {}%".format(nb_valid_guesses,
                                                                            nb_invalid_guesses + nb_contour_errors + nb_resize_errors,
-                                                                           nb_valid_guesses / (nb_invalid_guesses + nb_contour_errors + nb_resize_errors)))
+                                                                           nb_valid_guesses / 1000))
 
 print("Valid/Invalid guesses ratio (excluding errors): {}/{} = {}%".format(nb_valid_guesses,
                                                                            nb_invalid_guesses,
-                                                                           nb_valid_guesses / nb_invalid_guesses))
+                                                                           nb_valid_guesses / (1000 - nb_contour_errors - nb_resize_errors)))

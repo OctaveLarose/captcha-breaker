@@ -15,7 +15,7 @@ def get_mod_imgs(captcha_image_file: str):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # TODO: is it still necessary? Adds some extra padding around the image
-    gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
+    # gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
 
     # threshold the image (convert it to pure black and white)
     thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
@@ -77,14 +77,14 @@ def get_letter_image_regions(contours):
     return letter_image_regions
 
 
-def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text: str, gray: [[]]) -> None:
+def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text: str, main_img: [[]]) -> None:
     # Saving individual characters to images
     for char_box, char_text in zip(letter_image_regions, captcha_correct_text):
         # Grab the coordinates of the letter in the image
         x, y, w, h = char_box
 
         # Extract the letter from the original image with a 2-pixel margin around the edge
-        letter_image = gray[y - 2:y + h + 2, x - 2:x + w + 2]
+        letter_image = main_img[y - 2:y + h + 2, x - 2:x + w + 2]
 
         if not letter_image.any():
             break
@@ -127,13 +127,15 @@ def main():
             # cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
 
         if len(letter_image_regions) != 4:
+            # print(filename)
+            # cv2.imwrite("out.png", mod_thresh)
             # cv2.imshow("Output", mod_thresh)
             # key = cv2.waitKey() & 0xFF
             # if key == ord("q"):
             #     exit()
             continue
 
-        save_chars_to_imgs(letter_image_regions, os.path.splitext(filename)[0], gray)
+        save_chars_to_imgs(letter_image_regions, os.path.splitext(filename)[0], mod_thresh)
         nbr_valid += 1
 
     print('{} images had four sections precisely.'.format(nbr_valid))
