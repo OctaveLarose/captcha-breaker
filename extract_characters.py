@@ -1,6 +1,5 @@
 import os
 import shutil
-
 import cv2
 import imutils
 import numpy as np
@@ -9,6 +8,35 @@ from typing import Tuple
 DATASET_DIR = './dataset'
 CHARS_DIR = './chars'
 char_counts = {}
+
+
+def get_mod_thresh(captcha_image_file: str):
+    image = cv2.imread(captcha_image_file)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # TODO: is it still necessary? Adds some extra padding around the image
+    gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
+
+    # threshold the image (convert it to pure black and white)
+    thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
+    # eroding/dilating it to remove noise
+    element = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    mod_thresh = cv2.erode(thresh, element, iterations=3)
+    mod_thresh = cv2.dilate(mod_thresh, element, iterations=3)
+
+    # Gives +10 finds
+    kernel = np.ones((2, 2), np.uint8)
+    mod_thresh = cv2.morphologyEx(mod_thresh, cv2.MORPH_CLOSE, kernel)
+
+    return mod_thresh
+
+
+def get_contours(mod_thresh):
+    contours = cv2.findContours(mod_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Hack for compatibility with different OpenCV versions
+    return contours[1] if imutils.is_cv3() else contours[0]
 
 
 def get_letter_image_regions(contours):
@@ -87,37 +115,16 @@ def main():
     for filename in os.listdir(DATASET_DIR):
         captcha_image_file = os.path.join(DATASET_DIR, filename)
 
-        image = cv2.imread(captcha_image_file)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # TODO: is it still necessary? Adds some extra padding around the image
-        gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
-
-        # threshold the image (convert it to pure black and white)
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
-
-        # eroding/dilating it to remove noise
-        element = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
-        mod_thresh = cv2.erode(thresh, element, iterations=3)
-        mod_thresh = cv2.dilate(mod_thresh, element, iterations=3)
-
-        # Gives +10 finds
-        kernel = np.ones((2, 2), np.uint8)
-        mod_thresh = cv2.morphologyEx(mod_thresh, cv2.MORPH_CLOSE, kernel)
-
-        contours = cv2.findContours(mod_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Hack for compatibility with different OpenCV versions
-        contours = contours[1] if imutils.is_cv3() else contours[0]
-
+        mod_thresh = get_mod_thresh(captcha_image_file)
+        contours = get_contours(mod_thresh)
         letter_image_regions = get_letter_image_regions(contours)
 
-        for char_box in letter_image_regions:
+        # for char_box in letter_image_regions:
             # Grab the coordinates of the letter in the image
-            x, y, w, h = char_box
+            # x, y, w, h = char_box
 
-            # Extract the letter from the original image with a 2-pixel margin around the edge
-            cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
+            # 2-pixel margin around the edge. For debug
+            # cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
 
         if len(letter_image_regions) != 4:
             # cv2.imshow("Output", mod_thresh)

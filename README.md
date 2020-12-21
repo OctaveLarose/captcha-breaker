@@ -18,6 +18,8 @@ as of time of writing.
 virtualenv . ; source venv/bin/activate ; pip install -r requirements.txt
 python dataset_generator.py
 python extract_characters.py
+python neural_net_black_magic.py
+python solve_captchas.py
 ```
 
 1. (Optional) Setting up your virtualenv via `virtualenv . ; venv/bin/pip install -r requirements.txt`
@@ -26,4 +28,6 @@ python extract_characters.py
 
 3. Extracting individual characters from the CAPTCHA dataset thanks to `python extract_characters.py`.
 
-4. (TODO) Training the neural network with `python neural_net_black_magic.py`.
+4. Training the neural network with `python neural_net_black_magic.py`.
+
+5. Actually solving CAPTCHAs using `python solve_captchas.py`!
