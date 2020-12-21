@@ -15,7 +15,7 @@ as of time of writing.
 # Usage
 
 ```
-virtualenv . ; source venv/bin/activate ; pip install -r requirements.txt
+virtualenv . && source venv/bin/activate && pip install -r requirements.txt
 python dataset_generator.py
 python extract_characters.py
 python neural_net_black_magic.py
