@@ -81,7 +81,7 @@ model.add(Dense(52, activation="softmax"))
 model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Train the neural network
-model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=32, epochs=30, verbose=1)
+model.fit(X_train, Y_train, validation_data=(X_test, Y_test), batch_size=32, epochs=15, verbose=1)
 
 # Save the trained model to disk
 model.save(MODEL_FILENAME)

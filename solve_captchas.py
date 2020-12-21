@@ -31,7 +31,7 @@ captcha_image_files = list(paths.list_images(DATASET_DIR))
 # captcha_image_files = np.random.choice(captcha_image_files, size=(10,), replace=False)
 
 # loop over the image paths
-for captcha_image_file in captcha_image_files:
+for idx, captcha_image_file in enumerate(captcha_image_files):
     image, _ = get_mod_imgs(captcha_image_file)
     contours = get_contours(image)
     letter_image_regions = get_letter_image_regions(contours)
@@ -81,7 +81,7 @@ for captcha_image_file in captcha_image_files:
     # Print the captcha's text
     predicted_captcha_text = "".join(predictions)
     actual_captcha_text = captcha_image_file[-8:-4]
-    print("Predicted CAPTCHA text is: {} (Actual: {})".format(predicted_captcha_text, actual_captcha_text))
+    print("Predicted CAPTCHA no.{} text is: {} (Actual: {})".format(idx, predicted_captcha_text, actual_captcha_text))
 
     if predicted_captcha_text == actual_captcha_text:
         nb_valid_guesses += 1
@@ -96,14 +96,14 @@ for captcha_image_file in captcha_image_files:
 
 print("\nFinal results (on {} elements):".format(len(captcha_image_files)))
 print("Number of contour related errors (not 4 distinct characters found) : {}".format(nb_contour_errors))
-print("Number of CV2 resizing errors (couldn't resize image, so couldn't feed it to the NN) : {}".format(nb_resize_errors))
+print("Number of CV2 resizing errors : {}".format(nb_resize_errors))
 print("Number of invalid guesses : {}".format(nb_invalid_guesses))
 print("Number of valid guesses : {}".format(nb_valid_guesses))
 
 print("Valid/Invalid guesses ratio (including errors): {}/{} = {}%".format(nb_valid_guesses,
-                                                                           nb_invalid_guesses + nb_contour_errors + nb_resize_errors,
-                                                                           nb_valid_guesses / 1000))
+                                                                           len(captcha_image_files),
+                                                                           nb_valid_guesses / len(captcha_image_files)))
 
 print("Valid/Invalid guesses ratio (excluding errors): {}/{} = {}%".format(nb_valid_guesses,
-                                                                           nb_invalid_guesses,
-                                                                           nb_valid_guesses / (1000 - nb_contour_errors - nb_resize_errors)))
+                                                                           (len(captcha_image_files) - nb_contour_errors - nb_resize_errors),
+                                                                           nb_valid_guesses / (len(captcha_image_files) - nb_contour_errors - nb_resize_errors)))

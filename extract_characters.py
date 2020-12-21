@@ -99,7 +99,6 @@ def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text:
         # write the letter image to a file
         count = char_counts.get(char_text, 1)
         p = os.path.join(save_path, "{}.png".format(str(count).zfill(6)))
-        print(p)
         cv2.imwrite(p, letter_image)
 
         # increment the count for the current key
@@ -112,8 +111,10 @@ def main():
     os.makedirs(CHARS_DIR)
 
     nbr_valid = 0
-    for filename in os.listdir(DATASET_DIR):
+    for idx, filename in enumerate(os.listdir(DATASET_DIR)):
         captcha_image_file = os.path.join(DATASET_DIR, filename)
+
+        print('Processing image {} ({}/{})'.format(captcha_image_file, idx, len(os.listdir(DATASET_DIR))))
 
         mod_thresh, gray = get_mod_imgs(captcha_image_file)
         contours = get_contours(mod_thresh)
