@@ -1,7 +1,14 @@
 import os
+import shutil
+
 import cv2
 import imutils
 import numpy as np
+from typing import Tuple
+
+DATASET_DIR = './dataset'
+CHARS_DIR = './chars'
+char_counts = {}
 
 
 def get_letter_image_regions(contours):
@@ -42,8 +49,39 @@ def get_letter_image_regions(contours):
     return letter_image_regions
 
 
+def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text: str, gray: [[]]) -> None:
+    # Saving individual characters to images
+    for char_box, char_text in zip(letter_image_regions, captcha_correct_text):
+        # Grab the coordinates of the letter in the image
+        x, y, w, h = char_box
+
+        # Extract the letter from the original image with a 2-pixel margin around the edge
+        letter_image = gray[y - 2:y + h + 2, x - 2:x + w + 2]
+
+        if not letter_image.any():
+            break
+
+        # Get the folder to save the image in
+        save_path = os.path.join(CHARS_DIR, char_text)
+
+        # if the output directory does not exist, create it
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        # write the letter image to a file
+        count = char_counts.get(char_text, 1)
+        p = os.path.join(save_path, "{}.png".format(str(count).zfill(6)))
+        print(p)
+        cv2.imwrite(p, letter_image)
+
+        # increment the count for the current key
+        char_counts[char_text] = count + 1
+
+
 def main():
-    DATASET_DIR = './dataset'
+    if os.path.exists(CHARS_DIR):
+        shutil.rmtree(CHARS_DIR)
+    os.makedirs(CHARS_DIR)
 
     nbr_valid = 0
     for filename in os.listdir(DATASET_DIR):
@@ -53,7 +91,7 @@ def main():
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # TODO: is it still necessary? Adds some extra padding around the image
-        # gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
+        gray = cv2.copyMakeBorder(gray, 8, 8, 8, 8, cv2.BORDER_REPLICATE)
 
         # threshold the image (convert it to pure black and white)
         thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
@@ -74,21 +112,22 @@ def main():
 
         letter_image_regions = get_letter_image_regions(contours)
 
-        for letter_bounding_box in letter_image_regions:
+        for char_box in letter_image_regions:
             # Grab the coordinates of the letter in the image
-            x, y, w, h = letter_bounding_box
+            x, y, w, h = char_box
 
             # Extract the letter from the original image with a 2-pixel margin around the edge
             cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
 
-        if len(letter_image_regions) == 4:
-            nbr_valid += 1
-        else:
-            continue
+        if len(letter_image_regions) != 4:
             # cv2.imshow("Output", mod_thresh)
             # key = cv2.waitKey() & 0xFF
             # if key == ord("q"):
             #     exit()
+            continue
+
+        save_chars_to_imgs(letter_image_regions, os.path.splitext(filename)[0], gray)
+        nbr_valid += 1
 
     print('{} images had four sections precisely.'.format(nbr_valid))
 
