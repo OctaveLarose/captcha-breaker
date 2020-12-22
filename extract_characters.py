@@ -42,7 +42,8 @@ def get_letter_image_regions(contours):
     def split_contour_in_n(ct: Tuple, n: int) -> [Tuple]:
         split_contour = []
         for i in range(n):
-            split_contour.append((ct[0] + i * ct[2] // n, ct[1], i * ct[2] // n, ct[3]))
+            split_contour.append((ct[0] + i * ct[2] // n, ct[1], ct[2] // n, ct[3]))
+
         return split_contour
 
     letter_image_regions = []
@@ -56,6 +57,7 @@ def get_letter_image_regions(contours):
 
         letter_image_regions.append((x, y, w, h))
 
+
     # Splitting the biggest one into two if there are three
     if len(letter_image_regions) == 3:
         letter_image_regions = sorted(letter_image_regions, key=lambda a: a[2])
@@ -63,6 +65,7 @@ def get_letter_image_regions(contours):
         # Getting the one with the highest width from the back of the sorted list...
         # ...and splitting it in two
         letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 2)
+
 
     # If there are two, choose between splitting both into two or splitting the biggest one into three.
     # Splitting the biggest one into two if there are three
@@ -81,9 +84,11 @@ def get_letter_image_regions(contours):
             # Else, splitting the biggest one into three.
             letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 3)
 
+
     # A single block needs to be split into 4.
     if len(letter_image_regions) == 1:
         letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 4)
+
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
@@ -99,7 +104,7 @@ def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text:
         x, y, w, h = char_box
 
         # Extract the letter from the original image with a 2-pixel margin around the edge
-        letter_image = main_img[y - 2:y + h + 2, x - 2:x + w + 2]
+        letter_image = main_img[y - 2 if y - 2 > 0 else 0:y + h + 2, x - 2 if x - 2 > 0 else 0:x + w + 2]
 
         if not letter_image.any():
             break

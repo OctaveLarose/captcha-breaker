@@ -16,6 +16,7 @@ nb_contour_errors = 0
 nb_resize_errors = 0
 nb_invalid_guesses = 0
 nb_valid_guesses = 0
+nb_times_within_one_char = 0
 
 # Load up the model labels (so we can translate model predictions to actual letters)
 with open(MODEL_LABELS_FILENAME, "rb") as f:
@@ -86,6 +87,8 @@ for idx, captcha_image_file in enumerate(captcha_image_files):
     if predicted_captcha_text == actual_captcha_text:
         nb_valid_guesses += 1
     else:
+        if sum(actual_captcha_text[i] == predicted_captcha_text[i] for i in range(len(actual_captcha_text))) == len(actual_captcha_text) - 1:
+            nb_times_within_one_char += 1
         nb_invalid_guesses += 1
 
     # Show the annotated image
@@ -98,6 +101,7 @@ print("\nFinal results (on {} elements):".format(len(captcha_image_files)))
 print("Number of contour related errors (not 4 distinct characters found) : {}".format(nb_contour_errors))
 print("Number of CV2 resizing errors : {}".format(nb_resize_errors))
 print("Number of invalid guesses : {}".format(nb_invalid_guesses))
+print("Number of invalid guesses with a single error : {}".format(nb_times_within_one_char))
 print("Number of valid guesses : {}".format(nb_valid_guesses))
 
 print("Valid/Invalid guesses ratio (including errors): {}/{} = {}%".format(nb_valid_guesses,
