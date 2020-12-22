@@ -74,8 +74,9 @@ model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Flatten())
 model.add(Dense(500, activation="relu"))
 
-# Output layer with 52 nodes (one for each possible letter we predict)
-model.add(Dense(52, activation="softmax"))
+nbr_output_nodes = len(os.listdir('./chars'))
+# Output layer with enough input nodes (one for each possible character we can predict)
+model.add(Dense(nbr_output_nodes, activation="softmax"))
 
 # Ask Keras to build the TensorFlow model behind the scenes
 model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])

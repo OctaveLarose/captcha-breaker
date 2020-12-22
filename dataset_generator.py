@@ -15,7 +15,7 @@ def generate_dataset(dataset_size: int):
     os.makedirs(dataset_dir)
 
     for i in range(dataset_size):
-        captcha_content = ''.join([random.choice(string.ascii_letters) for _ in range(4)])
+        captcha_content = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(4)])
         print('{}/{}: {}...'.format(i, dataset_size, captcha_content))
 
         img = ImageCaptcha()

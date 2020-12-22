@@ -22,12 +22,11 @@ def get_mod_imgs(captcha_image_file: str):
 
     # eroding/dilating it to remove noise
     element = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-    mod_thresh = cv2.erode(thresh, element, iterations=3)
-    mod_thresh = cv2.dilate(mod_thresh, element, iterations=3)
+    mod_thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, element, iterations=3)
 
     # Gives +10 finds
     kernel = np.ones((2, 2), np.uint8)
-    mod_thresh = cv2.morphologyEx(mod_thresh, cv2.MORPH_CLOSE, kernel)
+    mod_thresh = cv2.morphologyEx(mod_thresh, cv2.MORPH_CLOSE, kernel, iterations=1)
 
     return mod_thresh, gray
 
@@ -68,7 +67,29 @@ def get_letter_image_regions(contours):
         letter_image_regions.append((x, y, w // 2, h))
         letter_image_regions.append((x + w // 2, y, w // 2, h))
 
-    # TODO: if there are two, choose between splitting both into two or splitting the biggest one into three.
+    # If there are two, choose between splitting both into two or splitting the biggest one into three.
+    # Splitting the biggest one into two if there are three
+    if len(letter_image_regions) == 2:
+        letter_image_regions = sorted(letter_image_regions, key=lambda a: a[2])
+
+        w1, w2 = letter_image_regions[0][2], letter_image_regions[1][2]
+
+        # If their size is similar: split both into two
+        TWO_SPLIT_THRES = 0.5
+        if 1 - TWO_SPLIT_THRES < w1 / w2 < 1 + TWO_SPLIT_THRES:
+            (x1, y1, w1, h1) = letter_image_regions.pop()
+            (x2, y2, w2, h2) = letter_image_regions.pop()
+            letter_image_regions.append((x1, y1, w1 // 2, h1))
+            letter_image_regions.append((x1 + w1 // 2, y1, w1 // 2, h1))
+            letter_image_regions.append((x2, y2, w2 // 2, h2))
+            letter_image_regions.append((x2 + w2 // 2, y2, w2 // 2, h2))
+        else:
+            # Else, splitting the biggest one into three.
+            (x, y, w, h) = letter_image_regions.pop()
+            letter_image_regions.append((x, y, w // 3, h))
+            letter_image_regions.append((x + w // 3, y, w // 3, h))
+            letter_image_regions.append((x + 2 * w // 3, y, 2 * w // 3, h))
+
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
@@ -121,11 +142,8 @@ def main():
         letter_image_regions = get_letter_image_regions(contours)
 
         # for char_box in letter_image_regions:
-            # Grab the coordinates of the letter in the image
-            # x, y, w, h = char_box
-
-            # 2-pixel margin around the edge. For debug
-            # cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
+        #     x, y, w, h = char_box
+        #     cv2.rectangle(mod_thresh, (x - 2, y - 2), (x + w + 4, y + h + 4), (255, 255, 255), 1)
 
         if len(letter_image_regions) != 4:
             # print(filename)
