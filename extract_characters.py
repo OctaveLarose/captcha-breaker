@@ -39,6 +39,12 @@ def get_contours(mod_thresh):
 
 
 def get_letter_image_regions(contours):
+    def split_contour_in_n(ct: Tuple, n: int) -> [Tuple]:
+        split_contour = []
+        for i in range(n):
+            split_contour.append((ct[0] + i * ct[2] // n, ct[1], i * ct[2] // n, ct[3]))
+        return split_contour
+
     letter_image_regions = []
 
     for contour in contours:
@@ -48,24 +54,15 @@ def get_letter_image_regions(contours):
         if w * h < 200:
             continue
 
-        # Splitting regions too large into two. Not the best solution imo.
-        if w / h > 1.25:
-            half_width = int(w / 2)
-            letter_image_regions.append((x, y, half_width, h))
-            letter_image_regions.append((x + half_width, y, half_width, h))
-        else:
-            letter_image_regions.append((x, y, w, h))
+        letter_image_regions.append((x, y, w, h))
 
     # Splitting the biggest one into two if there are three
     if len(letter_image_regions) == 3:
         letter_image_regions = sorted(letter_image_regions, key=lambda a: a[2])
 
-        # Getting the one with the highest width from the back of the sorted list
-        (x, y, w, h) = letter_image_regions.pop()
-
-        # Splitting it in two
-        letter_image_regions.append((x, y, w // 2, h))
-        letter_image_regions.append((x + w // 2, y, w // 2, h))
+        # Getting the one with the highest width from the back of the sorted list...
+        # ...and splitting it in two
+        letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 2)
 
     # If there are two, choose between splitting both into two or splitting the biggest one into three.
     # Splitting the biggest one into two if there are three
@@ -75,26 +72,23 @@ def get_letter_image_regions(contours):
         w1, w2 = letter_image_regions[0][2], letter_image_regions[1][2]
 
         # If their size is similar: split both into two
-        TWO_SPLIT_THRES = 0.5
+        TWO_SPLIT_THRES = 0.8
         if 1 - TWO_SPLIT_THRES < w1 / w2 < 1 + TWO_SPLIT_THRES:
-            (x1, y1, w1, h1) = letter_image_regions.pop()
-            (x2, y2, w2, h2) = letter_image_regions.pop()
-            letter_image_regions.append((x1, y1, w1 // 2, h1))
-            letter_image_regions.append((x1 + w1 // 2, y1, w1 // 2, h1))
-            letter_image_regions.append((x2, y2, w2 // 2, h2))
-            letter_image_regions.append((x2 + w2 // 2, y2, w2 // 2, h2))
+            ct1_split = split_contour_in_n(letter_image_regions.pop(), 2)
+            ct2_split = split_contour_in_n(letter_image_regions.pop(), 2)
+            letter_image_regions += (ct1_split + ct2_split)
         else:
             # Else, splitting the biggest one into three.
-            (x, y, w, h) = letter_image_regions.pop()
-            letter_image_regions.append((x, y, w // 3, h))
-            letter_image_regions.append((x + w // 3, y, w // 3, h))
-            letter_image_regions.append((x + 2 * w // 3, y, 2 * w // 3, h))
+            letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 3)
 
+    # A single block needs to be split into 4.
+    if len(letter_image_regions) == 1:
+        letter_image_regions += split_contour_in_n(letter_image_regions.pop(), 4)
 
     # Sort the detected letter images based on the x coordinate to make sure
     # we are processing them from left-to-right so we match the right image
     # with the right letter
-    letter_image_regions = sorted(letter_image_regions, key=lambda x: x[0])
+    letter_image_regions = sorted(letter_image_regions, key=lambda a: a[0])
     return letter_image_regions
 
 
@@ -119,7 +113,7 @@ def save_chars_to_imgs(letter_image_regions: [Tuple[int]], captcha_correct_text:
 
         # write the letter image to a file
         count = char_counts.get(char_text, 1)
-        p = os.path.join(save_path, "{}.png".format(str(count).zfill(6)))
+        p = os.path.join(save_path, f"{str(count)}_{captcha_correct_text}.png")
         cv2.imwrite(p, letter_image)
 
         # increment the count for the current key
@@ -153,6 +147,12 @@ def main():
             # if key == ord("q"):
             #     exit()
             continue
+        # print(filename)
+        # cv2.imwrite("out.png", mod_thresh)
+        # cv2.imshow("Output", mod_thresh)
+        # key = cv2.waitKey() & 0xFF
+        # if key == ord("q"):
+        #     exit()
 
         save_chars_to_imgs(letter_image_regions, os.path.splitext(filename)[0], mod_thresh)
         nbr_valid += 1
